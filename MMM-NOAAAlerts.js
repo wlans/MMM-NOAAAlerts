@@ -66,38 +66,38 @@ Module.register("MMM-NOAAAlerts", {
                 const currentAlert = document.querySelector(`#NOAA_Alert .alert:nth-child(${this.activeItem + 1})`);
 
                 if (currentAlert && container && this.config.showAsMarquee) {
-                    // Calculate how far the text needs to scroll.
-                    const scrollDistance = currentAlert.scrollWidth - container.clientWidth;
-                    container.scrollLeft = 0;
-                    let startTime = null;
-                    // Adjust the duration as needed (here 10 ms per pixel)
-                    const duration = scrollDistance * 10;
+                    // Wrap the marquee animation in a Promise to wait until it completes.
+                    await new Promise((resolve) => {
+                        const scrollDistance = currentAlert.scrollWidth - container.clientWidth;
+                        container.scrollLeft = 0;
+                        let startTime = null;
+                        const duration = scrollDistance * 10;
 
-                    const step = (timestamp) => {
-                        if (!startTime) startTime = timestamp;
-                        const progress = Math.min((timestamp - startTime) / duration, 1);
-                        container.scrollLeft = progress * scrollDistance;
+                        const step = (timestamp) => {
+                            if (!startTime) startTime = timestamp;
+                            const progress = Math.min((timestamp - startTime) / duration, 1);
+                            container.scrollLeft = progress * scrollDistance;
 
-                        if (progress < 1) {
-                            requestAnimationFrame(step);
-                        } else {
-                            // After the text is fully scrolled, wait for the configured delay.
-                            setTimeout(() => {
-                                container.scrollLeft = 0;
-                                this.advanceToNextAlert();
-                            }, this.config.marqueeDelay);
-                        }
-                    };
+                            if (progress < 1) {
+                                requestAnimationFrame(step);
+                            } else {
+                                // Once the text is fully scrolled, pause for the configured delay,
+                                // reset scroll, advance the alert, and then resolve the Promise.
+                                setTimeout(() => {
+                                    container.scrollLeft = 0;
+                                    this.advanceToNextAlert();
+                                    resolve();
+                                }, this.config.marqueeDelay);
+                            }
+                        };
 
-                    requestAnimationFrame(step);
+                        requestAnimationFrame(step);
+                    });
                 } else {
-                    // In non-marquee mode, wait for the rotateInterval before advancing.
+                    // In non-marquee mode, simply wait for the rotateInterval before advancing.
                     await pause(this.config.rotateInterval);
                     this.advanceToNextAlert();
                 }
-
-                // Small pause to avoid a tight loop.
-                await pause(50);
             }
         };
 
