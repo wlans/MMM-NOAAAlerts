@@ -1,9 +1,13 @@
 /*
     MMM-NOAAAlerts Module
         A Magic Mirror module to display current local weather warning and alerts.
-        Data is sourced from a NOAA CAP alerts served via the NOAA API  
+        Data is sourced from NOAA CAP alerts served via the NOAA API  
         https://www.weather.gov/documentation/services-web-api 
  */
+
+// Import Anime.js for smooth scrolling animations.
+import anime from "animejs/lib/anime.es.js";
+
 const NOAA_ALERTS_FETCH_MESSAGE = "FETCH_NOAA_ALERTS";
 
 Module.register("MMM-NOAAAlerts", {
@@ -51,7 +55,7 @@ Module.register("MMM-NOAAAlerts", {
         return this.data.header;
     },
 
-    // Rotate through list of events
+    // Rotate through list of events/alerts
     scheduleRotateInterval: function () {
         if (this.rotateTimer) {
             clearInterval(this.rotateTimer);
@@ -66,35 +70,35 @@ Module.register("MMM-NOAAAlerts", {
                 const currentAlert = document.querySelector(`#NOAA_Alert .alert:nth-child(${this.activeItem + 1})`);
 
                 if (currentAlert && container && this.config.showAsMarquee) {
-                    // Wrap the marquee animation in a Promise to wait until it completes.
+                    // Calculate how far the text needs to scroll.
+                    const scrollDistance = currentAlert.scrollWidth - container.clientWidth;
+                    // Reset scroll position.
+                    container.scrollLeft = 0;
+
+                    // Calculate duration based on a speed factor (e.g., 10ms per pixel).
+                    const speedFactor = 10; // milliseconds per pixel
+                    const duration = scrollDistance * speedFactor;
+
+                    // Animate the scrolling using Anime.js.
                     await new Promise((resolve) => {
-                        const scrollDistance = currentAlert.scrollWidth - container.clientWidth;
-                        container.scrollLeft = 0;
-                        let startTime = null;
-                        const duration = scrollDistance * 10;
-
-                        const step = (timestamp) => {
-                            if (!startTime) startTime = timestamp;
-                            const progress = Math.min((timestamp - startTime) / duration, 1);
-                            container.scrollLeft = progress * scrollDistance;
-
-                            if (progress < 1) {
-                                requestAnimationFrame(step);
-                            } else {
-                                // Once the text is fully scrolled, pause for the configured delay,
-                                // reset scroll, advance the alert, and then resolve the Promise.
+                        anime({
+                            targets: container,
+                            scrollLeft: scrollDistance,
+                            duration: duration,
+                            easing: 'linear',
+                            complete: () => {
+                                // After the scroll completes, wait for the marqueeDelay,
+                                // reset scroll position, advance to the next alert, then resolve.
                                 setTimeout(() => {
                                     container.scrollLeft = 0;
                                     this.advanceToNextAlert();
                                     resolve();
                                 }, this.config.marqueeDelay);
                             }
-                        };
-
-                        requestAnimationFrame(step);
+                        });
                     });
                 } else {
-                    // In non-marquee mode, simply wait for the rotateInterval before advancing.
+                    // Non-marquee mode: wait for the rotateInterval before advancing.
                     await pause(this.config.rotateInterval);
                     this.advanceToNextAlert();
                 }
