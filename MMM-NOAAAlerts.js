@@ -17,7 +17,8 @@ Module.register("MMM-NOAAAlerts", {
         debug: false,
         APIURL: "https://api.weather.gov/alerts/active?point=47.593,-122.333",
         updateInterval: 30 * 60 * 1000,
-        rotateInterval: 15 * 1000,
+        rotateInterval: 15 * 1000,  // Time to show each alert in non-marquee mode
+        marqueeDelay: 2000,        // Delay after a full marquee scroll (default 2 seconds)
         userAgent: "MagicMirrorMMTSWENG",
         showDescription: true,
         showInstruction: false,
@@ -56,6 +57,7 @@ Module.register("MMM-NOAAAlerts", {
             clearInterval(this.rotateTimer);
         }
 
+        // Helper function for creating a pause/delay.
         const pause = (duration) => new Promise(resolve => setTimeout(resolve, duration));
 
         const rotateAlerts = async () => {
@@ -64,11 +66,11 @@ Module.register("MMM-NOAAAlerts", {
                 const currentAlert = document.querySelector(`#NOAA_Alert .alert:nth-child(${this.activeItem + 1})`);
 
                 if (currentAlert && container && this.config.showAsMarquee) {
+                    // Calculate how far the text needs to scroll.
                     const scrollDistance = currentAlert.scrollWidth - container.clientWidth;
                     container.scrollLeft = 0;
-
-                    // Scroll smoothly across the alert
                     let startTime = null;
+                    // Adjust the duration as needed (here 10 ms per pixel)
                     const duration = scrollDistance * 10;
 
                     const step = (timestamp) => {
@@ -79,19 +81,23 @@ Module.register("MMM-NOAAAlerts", {
                         if (progress < 1) {
                             requestAnimationFrame(step);
                         } else {
-                            setTimeout(async () => {
+                            // After the text is fully scrolled, wait for the configured delay.
+                            setTimeout(() => {
                                 container.scrollLeft = 0;
-                                await pause(2000); // Pause for 2 seconds
                                 this.advanceToNextAlert();
-                            }, 2000);
+                            }, this.config.marqueeDelay);
                         }
                     };
 
                     requestAnimationFrame(step);
                 } else {
-                    await pause(2000); // Pause for 2 seconds
+                    // In non-marquee mode, wait for the rotateInterval before advancing.
+                    await pause(this.config.rotateInterval);
                     this.advanceToNextAlert();
                 }
+
+                // Small pause to avoid a tight loop.
+                await pause(50);
             }
         };
 
