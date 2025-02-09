@@ -58,12 +58,7 @@
   white-space: normal;
 }
 
-/* Marquee-related CSS (if needed for future use) */
-#NOAA_Alert .details {
-  overflow: hidden;
-  display: inline;
-}
-
+/* Marquee-related CSS */
 #NOAA_Alert .marqueeBox {
   width: 60%;
   overflow: hidden;
@@ -81,4 +76,34 @@
   -moz-transform: translateX(100%);
   -webkit-transform: translateX(100%);
   transform: translateX(100%);
+  -moz-animation: scroll-left 30s linear infinite;
+  -webkit-animation: scroll-left 30s linear infinite;
+  animation: scroll-left 30s linear infinite;
+}
+
+@-moz-keyframes scroll-left {
+  0% {
+    -moz-transform: translateX(100%);
+  }
+  100% {
+    -moz-transform: translateX(-100%);
+  }
+}
+
+@-webkit-keyframes scroll-left {
+  0% {
+    -webkit-transform: translateX(100%);
+  }
+  100% {
+    -webkit-transform: translateX(-100%);
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }

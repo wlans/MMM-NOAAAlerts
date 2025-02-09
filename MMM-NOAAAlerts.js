@@ -11,7 +11,7 @@ Module.register("MMM-NOAAAlerts", {
         debug: false,
         APIURL: "https://api.weather.gov/alerts/active?point=47.593,-122.333",
         updateInterval: 30 * 60 * 1000, // 30 minutes
-        rotateInterval: 15000,          // 15 seconds delay between rotations
+        rotateInterval: 5000,          // 5 seconds delay between rotations
         userAgent: "MagicMirrorMMTSWENG",
         showDescription: true,
         showInstruction: false,
