@@ -5,7 +5,6 @@
  */
 
 const NOAA_ALERTS_FETCH_MESSAGE = "FETCH_NOAA_ALERTS";
-const SmoothScroll = require("smooth-scroll");
 
 Module.register("MMM-NOAAAlerts", {
     // Module defaults (can be overridden in config.js)
@@ -13,7 +12,7 @@ Module.register("MMM-NOAAAlerts", {
         debug: false,
         APIURL: "https://api.weather.gov/alerts/active?point=47.593,-122.333",
         updateInterval: 30 * 60 * 1000, // 30 minutes
-        // Note: rotateInterval here is used as the delay (in ms) after scroll finishes
+        // rotateInterval is the delay (in ms) after scrolling finishes
         rotateInterval: 15000,          // 15 seconds delay after scrolling before rotating to the next alert
         userAgent: "MagicMirrorMMTSWENG",
         showDescription: true,
@@ -29,7 +28,29 @@ Module.register("MMM-NOAAAlerts", {
     activeItem: 0,
     rotateTimer: null,
 
-    // Return the template file name to use (make sure this file exists in the module folder)
+    /**
+     * getScripts
+     * Loads external scripts before the module is started.
+     * Here we load the smooth-scroll library from a CDN.
+     */
+    getScripts: function () {
+        return [
+            "https://cdnjs.cloudflare.com/ajax/libs/smooth-scroll/16.1.3/smooth-scroll.polyfills.min.js"
+        ];
+    },
+
+    /**
+     * getStyles
+     * Loads the module's CSS file.
+     */
+    getStyles: function () {
+        return ["MMM-NOAAAlerts.css"];
+    },
+
+    /**
+     * getTemplate
+     * Returns the template filename (ensure MMM-NOAAAlerts.njk exists in your module folder).
+     */
     getTemplate: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplate called.");
@@ -37,7 +58,10 @@ Module.register("MMM-NOAAAlerts", {
         return "MMM-NOAAAlerts.njk";
     },
 
-    // Provide data to the template (including API data and config)
+    /**
+     * getTemplateData
+     * Provides the data to the template.
+     */
     getTemplateData: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplateData called. APIData:", this.APIData);
@@ -48,19 +72,17 @@ Module.register("MMM-NOAAAlerts", {
         };
     },
 
-    // Return the stylesheet(s) to use
-    getStyles: function () {
-        return ["MMM-NOAAAlerts.css"];
-    },
-
-    // Return the header text (if defined)
+    /**
+     * getHeader
+     * Returns the header text if defined.
+     */
     getHeader: function () {
         return this.data.header;
     },
 
-    /* 
+    /**
      * scheduleRotateInterval
-     * Starts the alert rotation process if there are alerts available.
+     * Starts the alert rotation process if alerts are available.
      */
     scheduleRotateInterval: function () {
         if (!this.APIData.alerts || this.APIData.alerts.length === 0) {
@@ -76,7 +98,7 @@ Module.register("MMM-NOAAAlerts", {
         this.rotateAlerts();
     },
 
-    /*
+    /**
      * rotateAlerts
      * Increments the active alert index, updates the DOM classes, and uses smooth scrolling.
      * Once smooth scrolling completes, waits for the configured delay before proceeding.
@@ -100,7 +122,7 @@ Module.register("MMM-NOAAAlerts", {
         }
 
         // Retrieve all alert elements from the DOM.
-        // (Make sure your template renders a container with id="NOAA_Alert" and each alert with the class "alert".)
+        // Ensure your template renders a container with id="NOAA_Alert" and each alert with the class "alert".
         let alertElements = document.querySelectorAll("#NOAA_Alert .alert");
         if (!alertElements || alertElements.length === 0) {
             if (this.config.debug) {
@@ -109,7 +131,7 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Update each alert element's classes and perform smooth scrolling on the active element.
+        // Update classes for active/inactive alerts and perform smooth scrolling on the active element.
         alertElements.forEach((al, idx) => {
             if (idx === myID) {
                 al.classList.add("active");
@@ -117,6 +139,7 @@ Module.register("MMM-NOAAAlerts", {
                 if (this.config.debug) {
                     console.log(`MMM-NOAAAlerts: Setting alert ${myID} active and starting smooth scroll.`);
                 }
+                // Use the global SmoothScroll (loaded via getScripts)
                 let scroll = new SmoothScroll();
                 scroll.animateScroll(al, null, {
                     speed: 600,
@@ -137,9 +160,10 @@ Module.register("MMM-NOAAAlerts", {
         });
     },
 
-    /*
+    /**
      * notificationReceived
-     * Once all modules are started, send the configuration to the node_helper.
+     * Called when the module receives a notification from other modules or the system.
+     * Once all modules are started, sends the configuration to the node_helper.
      */
     notificationReceived: function (notification, payload, sender) {
         if (notification === "ALL_MODULES_STARTED") {
@@ -150,10 +174,10 @@ Module.register("MMM-NOAAAlerts", {
         }
     },
 
-    /*
+    /**
      * socketNotificationReceived
      * Handles messages from the node_helper. When NOAA data is received, the module's APIData
-     * is updated, the rotation of alerts is scheduled, and the DOM is updated.
+     * is updated, alert rotation is scheduled, and the DOM is updated.
      */
     socketNotificationReceived: function (notification, payload) {
         if (notification === NOAA_ALERTS_FETCH_MESSAGE) {
