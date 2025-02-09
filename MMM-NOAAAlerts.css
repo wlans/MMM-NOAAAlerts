@@ -1,117 +1,104 @@
 .MMM-NOAAAlerts {
-    margin: 0;
+  margin: 0;
 }
 #NOAA_Alert {
-    font-size: medium;
-    display: block;
-    width: 100%;
-    z-index: 3;
-    margin: 0;
+  font-size: medium;
+  display: block;
+  width: 100vw
+  z-index: 3;
+  margin: 0;
 }
-#NOAA_Alert .alert{
-    overflow: hidden;
+#NOAA_Alert .alert {
+  overflow: hidden;
 }
-
-#NOAA_Alert .inactive{
-    display: none;
+#NOAA_Alert .inactive {
+  display: none;
 }
-
-#NOAA_Alert .active{
-    display: block;
+#NOAA_Alert .active {
+  display: block;
 }
-
 #NOAA_Alert .Severe {
-    color: red;
+  color: red;
 }
-
 #NOAA_Alert .Moderate {
-    color: yellow;
+  color: yellow;
+}
+#NOAA_Alert .title {
+  text-align: center;
+}
+#NOAA_Alert .event {
+  font-weight: bold;
+  display: inline;
+}
+#NOAA_Alert .headline {
+  color: #ccc;
+  display: inline;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+#NOAA_Alert .description,
+#NOAA_Alert .instruction {
+  font-size: small;
+  color: #999;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
 }
 
-#NOAA_Alert .title
-{
-    text-align: center;
+/* Marquee-related CSS (if needed for future use) */
+#NOAA_Alert .details {
+  overflow: hidden;
+  display: inline;
 }
-
-#NOAA_Alert .event
-{
-    font-weight: bold;
-    display: inline;
+#NOAA_Alert .marqueeBox {
+  width: 60%;
+  overflow: hidden;
+  display: inline-flex;
 }
-
-#NOAA_Alert .headline
-{
-    color: #ccc;
-    display: inline;
-    text-overflow:ellipsis;
-	overflow:hidden;
+#NOAA_Alert .marquee {
+  font-size: small;
+  color: #999;
+  display: inline-block;
+  clear: left;
+  padding: 10;
+  width: 100vw
+  white-space: nowrap;
+  text-align: center;
+  -moz-transform: translateX(100%);
+  -webkit-transform: translateX(100%);
+  transform: translateX(100%);
+  -moz-animation: scroll-left 30s linear infinite;
+  -webkit-animation: scroll-left 30s linear infinite;
+  animation: scroll-left 30s linear infinite;
 }
-
-#NOAA_Alert .description,  #NOAA_Alert .instruction
-{
-    font-size: small;
-    color: #999;
-	text-overflow:ellipsis;
-	overflow:hidden;
-	display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		white-space: normal;
+@-moz-keyframes scroll-left {
+  0% {
+    -moz-transform: translateX(100%);
+  }
+  100% {
+    -moz-transform: translateX(-100%);
+  }
 }
-
-/* define the marquee animation */
-#NOAA_Alert .details
-{
-    overflow: hidden;
-    display: inline;
+@-webkit-keyframes scroll-left {
+  0% {
+    -webkit-transform: translateX(100%);
+  }
+  100% {
+    -webkit-transform: translateX(-100%);
+  }
 }
-#NOAA_Alert .marqueeBox
-{
-    width: 60%;
-    overflow: hidden;
-    display: inline-flex;
-}
-#NOAA_Alert .marquee
-{
-    font-size: small;
-    color: #999;
-    display: inline-block;
-    clear: left;
-    width: 100%;
-    white-space: nowrap;
-    text-align: center;
+@keyframes scroll-left {
+  0% {
     -moz-transform: translateX(100%);
     -webkit-transform: translateX(100%);
     transform: translateX(100%);
-    -moz-animation: scroll-left 30s linear infinite;
-    -webkit-animation: scroll-left 30s linear infinite;
-    animation: scroll-left 30s linear infinite;
-}
-@-moz-keyframes scroll-left {
-    0% {
-        -moz-transform: translateX(100%);
-    }
-    100% {
-        -moz-transform: translateX(-100%);
-    }
-}
-@-webkit-keyframes scroll-left {
-    0% {
-        -webkit-transform: translateX(100%);
-    }
-    100% {
-        -webkit-transform: translateX(-100%);
-    }
-}
-@keyframes scroll-left {
-    0% {
-        -moz-transform: translateX(100%);
-        -webkit-transform: translateX(100%);
-        transform: translateX(100%);
-    }
-    100% {
-        -moz-transform: translateX(-100%);
-        -webkit-transform: translateX(-100%);
-        transform: translateX(-100%);
-    }
+  }
+  100% {
+    -moz-transform: translateX(-100%);
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+  }
 }
