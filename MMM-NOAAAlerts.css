@@ -1,41 +1,51 @@
 .MMM-NOAAAlerts {
   margin: 0;
 }
+
 #NOAA_Alert {
   font-size: medium;
   display: block;
-  width: 100vw
+  width: 100vw;
   z-index: 3;
   margin: 0;
 }
+
 #NOAA_Alert .alert {
   overflow: hidden;
 }
+
 #NOAA_Alert .inactive {
   display: none;
 }
+
 #NOAA_Alert .active {
   display: block;
 }
+
 #NOAA_Alert .Severe {
   color: red;
 }
+
 #NOAA_Alert .Moderate {
   color: yellow;
 }
+
 #NOAA_Alert .title {
   text-align: center;
 }
+
 #NOAA_Alert .event {
   font-weight: bold;
   display: inline;
 }
+
 #NOAA_Alert .headline {
   color: #ccc;
   display: inline;
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
 #NOAA_Alert .description,
 #NOAA_Alert .instruction {
   font-size: small;
@@ -48,23 +58,30 @@
   white-space: normal;
 }
 
-/* Marquee-related CSS (if needed for future use) */
+/* Marquee-related CSS */
 #NOAA_Alert .details {
   overflow: hidden;
   display: inline;
 }
+
+/* 
+    Ensure the marqueeBox takes up the full viewport width (100vw)
+    so that the marquee animation spans the entire width.
+  */
 #NOAA_Alert .marqueeBox {
-  width: 60%;
+  width: 100vw;
   overflow: hidden;
   display: inline-flex;
 }
+
+/* The marquee element: prevent wrapping and animate from 100% to -100% */
 #NOAA_Alert .marquee {
   font-size: small;
   color: #999;
   display: inline-block;
   clear: left;
-  padding: 10;
-  width: 100vw
+  padding: 10px;
+  width: 100vw;
   white-space: nowrap;
   text-align: center;
   -moz-transform: translateX(100%);
@@ -74,6 +91,7 @@
   -webkit-animation: scroll-left 30s linear infinite;
   animation: scroll-left 30s linear infinite;
 }
+
 @-moz-keyframes scroll-left {
   0% {
     -moz-transform: translateX(100%);
@@ -82,6 +100,7 @@
     -moz-transform: translateX(-100%);
   }
 }
+
 @-webkit-keyframes scroll-left {
   0% {
     -webkit-transform: translateX(100%);
@@ -90,6 +109,7 @@
     -webkit-transform: translateX(-100%);
   }
 }
+
 @keyframes scroll-left {
   0% {
     -moz-transform: translateX(100%);
