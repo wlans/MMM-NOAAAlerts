@@ -3,29 +3,33 @@
  * Data is sourced from NOAA CAP alerts via the NOAA API:
  * https://www.weather.gov/documentation/services-web-api
  */
+
 const NOAA_ALERTS_FETCH_MESSAGE = "FETCH_NOAA_ALERTS";
-const SmoothScroll = require('smooth-scroll');
+const SmoothScroll = require("smooth-scroll");
 
 Module.register("MMM-NOAAAlerts", {
-    config: null,
-    APIData: {},
-    activeItem: 0,
-    rotateTimer: null,
-
+    // Module defaults (can be overridden in config.js)
     defaults: {
         debug: false,
         APIURL: "https://api.weather.gov/alerts/active?point=47.593,-122.333",
         updateInterval: 30 * 60 * 1000, // 30 minutes
-        rotateInterval: 15000, // 15 seconds between rotations
+        // Note: rotateInterval here is used as the delay (in ms) after scroll finishes
+        rotateInterval: 15000,          // 15 seconds delay after scrolling before rotating to the next alert
         userAgent: "MagicMirrorMMTSWENG",
         showDescription: true,
         showInstruction: false,
         showNoAlertText: false,
-        noAlertText: 'There are no active weather alerts in this area',
+        noAlertText: "There are no active weather alerts in this area",
         removeGap: true,
         showAsMarquee: false
     },
 
+    // Module properties
+    APIData: {},
+    activeItem: 0,
+    rotateTimer: null,
+
+    // Return the template file name to use (make sure this file exists in the module folder)
     getTemplate: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplate called.");
@@ -33,6 +37,7 @@ Module.register("MMM-NOAAAlerts", {
         return "MMM-NOAAAlerts.njk";
     },
 
+    // Provide data to the template (including API data and config)
     getTemplateData: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplateData called. APIData:", this.APIData);
@@ -43,15 +48,20 @@ Module.register("MMM-NOAAAlerts", {
         };
     },
 
+    // Return the stylesheet(s) to use
     getStyles: function () {
         return ["MMM-NOAAAlerts.css"];
     },
 
+    // Return the header text (if defined)
     getHeader: function () {
         return this.data.header;
     },
 
-    // This method starts the rotation once alerts have been loaded.
+    /* 
+     * scheduleRotateInterval
+     * Starts the alert rotation process if there are alerts available.
+     */
     scheduleRotateInterval: function () {
         if (!this.APIData.alerts || this.APIData.alerts.length === 0) {
             if (this.config.debug) {
@@ -60,13 +70,17 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
         if (this.config.debug) {
-            console.log("MMM-NOAAAlerts: Starting rotation of alerts.");
+            console.log("MMM-NOAAAlerts: Starting alert rotation.");
         }
-        // Start the rotation
+        // Start rotation (immediately rotate to the first alert)
         this.rotateAlerts();
     },
 
-    // Rotate through the alerts. Only moves to the next alert after smooth scrolling finishes.
+    /*
+     * rotateAlerts
+     * Increments the active alert index, updates the DOM classes, and uses smooth scrolling.
+     * Once smooth scrolling completes, waits for the configured delay before proceeding.
+     */
     rotateAlerts: function () {
         if (!this.APIData.alerts || this.APIData.alerts.length === 0) {
             if (this.config.debug) {
@@ -75,17 +89,18 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Advance to the next alert index
+        // Increment activeItem (wrap around if necessary)
         this.activeItem++;
         if (this.activeItem >= this.APIData.alerts.length) {
             this.activeItem = 0;
         }
         let myID = this.activeItem;
         if (this.config.debug) {
-            console.log(`MMM-NOAAAlerts: Rotating to alert index ${myID}`);
+            console.log(`MMM-NOAAAlerts: Rotating to alert index ${myID}.`);
         }
 
-        // Get the alert elements from the DOM
+        // Retrieve all alert elements from the DOM.
+        // (Make sure your template renders a container with id="NOAA_Alert" and each alert with the class "alert".)
         let alertElements = document.querySelectorAll("#NOAA_Alert .alert");
         if (!alertElements || alertElements.length === 0) {
             if (this.config.debug) {
@@ -94,7 +109,7 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Update classes for active/inactive alerts and perform smooth scrolling on the active one.
+        // Update each alert element's classes and perform smooth scrolling on the active element.
         alertElements.forEach((al, idx) => {
             if (idx === myID) {
                 al.classList.add("active");
@@ -110,7 +125,6 @@ Module.register("MMM-NOAAAlerts", {
                         if (this.config.debug) {
                             console.log(`MMM-NOAAAlerts: Smooth scrolling finished for alert ${myID}. Waiting ${this.config.rotateInterval}ms before next rotation.`);
                         }
-                        // Wait rotateInterval ms before proceeding to the next alert.
                         setTimeout(() => {
                             this.rotateAlerts();
                         }, this.config.rotateInterval);
@@ -123,7 +137,10 @@ Module.register("MMM-NOAAAlerts", {
         });
     },
 
-    // Receive notifications from other modules and the system.
+    /*
+     * notificationReceived
+     * Once all modules are started, send the configuration to the node_helper.
+     */
     notificationReceived: function (notification, payload, sender) {
         if (notification === "ALL_MODULES_STARTED") {
             if (this.config.debug) {
@@ -133,22 +150,22 @@ Module.register("MMM-NOAAAlerts", {
         }
     },
 
-    // Handle socket notifications from the node_helper.
+    /*
+     * socketNotificationReceived
+     * Handles messages from the node_helper. When NOAA data is received, the module's APIData
+     * is updated, the rotation of alerts is scheduled, and the DOM is updated.
+     */
     socketNotificationReceived: function (notification, payload) {
         if (notification === NOAA_ALERTS_FETCH_MESSAGE) {
             if (this.config.debug) {
                 console.log("MMM-NOAAAlerts: Received NOAA_ALERTS_FETCH_MESSAGE with payload:", payload);
             }
             this.APIData = payload;
-
-            // Check if APIData contains alerts. Adjust this if your data structure is different.
-            if (!this.APIData.alerts || this.APIData.alerts.length === 0) {
-                if (this.config.debug) {
-                    console.log("MMM-NOAAAlerts: APIData does not contain any alerts.");
-                }
-            } else {
-                if (this.config.debug) {
-                    console.log(`MMM-NOAAAlerts: APIData contains ${this.APIData.alerts.length} alert(s).`);
+            if (this.config.debug) {
+                if (this.APIData.alerts && this.APIData.alerts.length > 0) {
+                    console.log(`MMM-NOAAAlerts: Received ${this.APIData.alerts.length} alert(s).`);
+                } else {
+                    console.log("MMM-NOAAAlerts: Received no alerts.");
                 }
             }
             this.scheduleRotateInterval();

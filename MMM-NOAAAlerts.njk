@@ -1,23 +1,17 @@
-{% if APIData.alertCount > 0  %}
 <div id="NOAA_Alert">
-    {% for al in APIData.alerts %}
-    <div class="alert {{al.severity}} inactive">
-        <div class="title">
-        <div class="event">{{al.event}}</div>
-        <div class="headline">{{al.headline}}</div>
-        </div>
-        
-        <div class="marqueeBox"><div class="details">
+  {% if APIData.alerts and APIData.alerts.length > 0 %}
+    {% for alert in APIData.alerts %}
+      <div class="alert {% if loop.index0 == 0 %}active{% else %}inactive{% endif %}">
+        <h2>{{ alert.event }}</h2>
+        <p>{{ alert.headline }}</p>
         {% if config.showDescription %}
-            <div class="{% if config.showAsMarquee %} marquee {% else %} description {% endif %}">{{al.description}}</div>
+          <p>{{ alert.description }}</p>
         {% endif %}
-        {% if config.showInstruction %}
-            <div class="{% if config.showAsMarquee %} marquee {% else %} instruction {% endif %}">{{al.instruction}}</div>
-        {% endif %}
-        </div></div>
-    </div>
+      </div>
     {% endfor %}
+  {% else %}
+    <div class="alert no-alert">
+      {{ config.noAlertText }}
+    </div>
+  {% endif %}
 </div>
-{% else %}
-    {% if config.showNoAlertText %}<div class="alert">{{config.noAlertText}}</div>{% endif %}
-{% endif %}
