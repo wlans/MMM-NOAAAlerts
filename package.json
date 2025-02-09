@@ -19,6 +19,7 @@
     "homepage": "https://github.com/mmtsweng/MMM-NOAAAlerts#readme",
     "dependencies": {
         "animejs": "^3.2.2",
+        "smooth-scroll": "^16.1.3",
         "url": "^0.11.0"
     }
 }
