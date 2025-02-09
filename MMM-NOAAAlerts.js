@@ -3,7 +3,6 @@
  * Data is sourced from NOAA CAP alerts via the NOAA API:
  * https://www.weather.gov/documentation/services-web-api
  */
-
 const NOAA_ALERTS_FETCH_MESSAGE = "FETCH_NOAA_ALERTS";
 
 Module.register("MMM-NOAAAlerts", {
@@ -12,45 +11,40 @@ Module.register("MMM-NOAAAlerts", {
         debug: false,
         APIURL: "https://api.weather.gov/alerts/active?point=47.593,-122.333",
         updateInterval: 30 * 60 * 1000, // 30 minutes
-        // rotateInterval is the delay (in ms) after scrolling finishes
-        rotateInterval: 15000,          // 15 seconds delay after scrolling before rotating to the next alert
+        rotateInterval: 15000,          // 15 seconds delay between rotations
         userAgent: "MagicMirrorMMTSWENG",
         showDescription: true,
         showInstruction: false,
         showNoAlertText: false,
         noAlertText: "There are no active weather alerts in this area",
         removeGap: true,
+        // When true, the module will output a marquee ticker (CSS handles the continuous scroll)
         showAsMarquee: false
     },
 
     // Module properties
     APIData: {},
     activeItem: 0,
-    rotateTimer: null,
 
     /**
-     * getScripts
-     * Loads external scripts before the module is started.
-     * Here we load the smooth-scroll library from a CDN.
+     * getScripts:
+     * In non-marquee mode we use the smooth-scroll library (which is loaded via CDN);
+     * in marquee mode we rely solely on CSS.
      */
     getScripts: function () {
-        return [
-            "https://cdnjs.cloudflare.com/ajax/libs/smooth-scroll/16.1.3/smooth-scroll.polyfills.min.js"
-        ];
+        if (!this.config.showAsMarquee) {
+            return [
+                "https://cdnjs.cloudflare.com/ajax/libs/smooth-scroll/16.1.3/smooth-scroll.polyfills.min.js"
+            ];
+        } else {
+            return [];
+        }
     },
 
-    /**
-     * getStyles
-     * Loads the module's CSS file.
-     */
     getStyles: function () {
         return ["MMM-NOAAAlerts.css"];
     },
 
-    /**
-     * getTemplate
-     * Returns the template filename (ensure MMM-NOAAAlerts.njk exists in your module folder).
-     */
     getTemplate: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplate called.");
@@ -58,10 +52,6 @@ Module.register("MMM-NOAAAlerts", {
         return "MMM-NOAAAlerts.njk";
     },
 
-    /**
-     * getTemplateData
-     * Provides the data to the template.
-     */
     getTemplateData: function () {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: getTemplateData called. APIData:", this.APIData);
@@ -72,16 +62,12 @@ Module.register("MMM-NOAAAlerts", {
         };
     },
 
-    /**
-     * getHeader
-     * Returns the header text if defined.
-     */
     getHeader: function () {
         return this.data.header;
     },
 
     /**
-     * scheduleRotateInterval
+     * scheduleRotateInterval:
      * Starts the alert rotation process if alerts are available.
      */
     scheduleRotateInterval: function () {
@@ -94,14 +80,15 @@ Module.register("MMM-NOAAAlerts", {
         if (this.config.debug) {
             console.log("MMM-NOAAAlerts: Starting alert rotation.");
         }
-        // Start rotation (immediately rotate to the first alert)
         this.rotateAlerts();
     },
 
     /**
-     * rotateAlerts
-     * Increments the active alert index, updates the DOM classes, and uses smooth scrolling.
-     * Once smooth scrolling completes, waits for the configured delay before proceeding.
+     * rotateAlerts:
+     * Increments the active alert index, updates the DOM classes and then:
+     * - If showAsMarquee is false: uses smooth scrolling to transition to the new alert.
+     * - If showAsMarquee is true: simply waits (letting the CSS marquee animation do the scrolling)
+     *   before rotating to the next alert.
      */
     rotateAlerts: function () {
         if (!this.APIData.alerts || this.APIData.alerts.length === 0) {
@@ -122,7 +109,7 @@ Module.register("MMM-NOAAAlerts", {
         }
 
         // Retrieve all alert elements from the DOM.
-        // Ensure your template renders a container with id="NOAA_Alert" and each alert with the class "alert".
+        // (Ensure your template renders a container with id="NOAA_Alert" and each alert with the class "alert".)
         let alertElements = document.querySelectorAll("#NOAA_Alert .alert");
         if (!alertElements || alertElements.length === 0) {
             if (this.config.debug) {
@@ -131,17 +118,25 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Update classes for active/inactive alerts and perform smooth scrolling on the active element.
+        // Update each alert element's classes: only the current alert gets the "active" class.
         alertElements.forEach((al, idx) => {
             if (idx === myID) {
                 al.classList.add("active");
                 al.classList.remove("inactive");
                 if (this.config.debug) {
-                    console.log(`MMM-NOAAAlerts: Setting alert ${myID} active and starting smooth scroll.`);
+                    console.log(`MMM-NOAAAlerts: Alert ${myID} set active.`);
                 }
-                // Use the global SmoothScroll (loaded via getScripts)
+            } else {
+                al.classList.add("inactive");
+                al.classList.remove("active");
+            }
+        });
+
+        // If not in marquee mode, perform smooth scrolling to the active alert.
+        if (!this.config.showAsMarquee) {
+            if (typeof SmoothScroll !== "undefined") {
                 let scroll = new SmoothScroll();
-                scroll.animateScroll(al, null, {
+                scroll.animateScroll(alertElements[myID], null, {
                     speed: 600,
                     easing: "easeInOutCubic",
                     after: () => {
@@ -154,16 +149,28 @@ Module.register("MMM-NOAAAlerts", {
                     }
                 });
             } else {
-                al.classList.add("inactive");
-                al.classList.remove("active");
+                // Fallback if SmoothScroll is not loaded
+                if (this.config.debug) {
+                    console.log("MMM-NOAAAlerts: SmoothScroll not available, using fallback timeout.");
+                }
+                setTimeout(() => {
+                    this.rotateAlerts();
+                }, this.config.rotateInterval);
             }
-        });
+        } else {
+            // In marquee mode, let the CSS animation run. Wait for the rotateInterval then rotate.
+            if (this.config.debug) {
+                console.log(`MMM-NOAAAlerts: Marquee mode active. Waiting ${this.config.rotateInterval}ms before next rotation.`);
+            }
+            setTimeout(() => {
+                this.rotateAlerts();
+            }, this.config.rotateInterval);
+        }
     },
 
     /**
-     * notificationReceived
-     * Called when the module receives a notification from other modules or the system.
-     * Once all modules are started, sends the configuration to the node_helper.
+     * notificationReceived:
+     * Once all modules have started, sends configuration to the node_helper.
      */
     notificationReceived: function (notification, payload, sender) {
         if (notification === "ALL_MODULES_STARTED") {
@@ -175,7 +182,7 @@ Module.register("MMM-NOAAAlerts", {
     },
 
     /**
-     * socketNotificationReceived
+     * socketNotificationReceived:
      * Handles messages from the node_helper. When NOAA data is received, the module's APIData
      * is updated, alert rotation is scheduled, and the DOM is updated.
      */
