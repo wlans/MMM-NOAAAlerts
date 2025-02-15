@@ -97,6 +97,14 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
+        // Prevent unnecessary rotations if only one alert exists
+        if (this.APIData.alerts.length === 1) {
+            if (this.config.debug) {
+                console.log("MMM-NOAAAlerts: Only one alert available, skipping rotation.");
+            }
+            return;
+        }
+
         // Increment activeItem (wrap around if necessary)
         this.activeItem++;
         if (this.activeItem >= this.APIData.alerts.length) {
@@ -108,7 +116,6 @@ Module.register("MMM-NOAAAlerts", {
         }
 
         // Retrieve all alert elements from the DOM.
-        // Ensure your template renders a container with id="NOAA_Alert" and each alert with class "alert".
         let alertElements = document.querySelectorAll("#NOAA_Alert .alert");
         if (!alertElements || alertElements.length === 0) {
             if (this.config.debug) {
@@ -117,54 +124,25 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Update each alert element's classes: only the current alert gets "active"
+        // Fade out current alert before switching
         alertElements.forEach((al, idx) => {
             if (idx === myID) {
                 al.classList.add("active");
                 al.classList.remove("inactive");
-                if (this.config.debug) {
-                    console.log(`MMM-NOAAAlerts: Alert ${myID} set active.`);
-                }
+                al.style.opacity = "1";  // Fully visible
             } else {
                 al.classList.add("inactive");
                 al.classList.remove("active");
+                al.style.opacity = "0";  // Fade out
             }
         });
 
-        // If not in marquee mode, perform smooth scrolling to the active alert.
-        if (!this.config.showAsMarquee) {
-            if (typeof SmoothScroll !== "undefined") {
-                let scroll = new SmoothScroll();
-                scroll.animateScroll(alertElements[myID], null, {
-                    speed: 600,
-                    easing: "easeInOutCubic",
-                    after: () => {
-                        if (this.config.debug) {
-                            console.log(`MMM-NOAAAlerts: Smooth scrolling finished for alert ${myID}. Waiting ${this.config.rotateInterval}ms before next rotation.`);
-                        }
-                        setTimeout(() => {
-                            this.rotateAlerts();
-                        }, this.config.rotateInterval);
-                    }
-                });
-            } else {
-                if (this.config.debug) {
-                    console.log("MMM-NOAAAlerts: SmoothScroll not available, using fallback timeout.");
-                }
-                setTimeout(() => {
-                    this.rotateAlerts();
-                }, this.config.rotateInterval);
-            }
-        } else {
-            // If marquee mode were enabled, let the CSS animation run.
-            if (this.config.debug) {
-                console.log(`MMM-NOAAAlerts: Marquee mode active. Waiting ${this.config.rotateInterval}ms before next rotation.`);
-            }
-            setTimeout(() => {
-                this.rotateAlerts();
-            }, this.config.rotateInterval);
-        }
-    },
+        // Delay before rotating to the next alert
+        setTimeout(() => {
+            this.rotateAlerts();
+        }, this.config.rotateInterval);
+    }
+    ,
 
     /**
      * notificationReceived:

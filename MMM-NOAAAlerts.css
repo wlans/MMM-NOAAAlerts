@@ -81,6 +81,15 @@
   animation: scroll-left 30s linear infinite;
 }
 
+#NOAA_Alert .alert {
+  transition: opacity 1s ease-in-out; /* Smooth fade in/out */
+  opacity: 0;
+}
+
+#NOAA_Alert .alert.active {
+  opacity: 1; /* Show only active alert */
+}
+
 @-moz-keyframes scroll-left {
   0% {
     -moz-transform: translateX(100%);
