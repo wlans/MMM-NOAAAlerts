@@ -124,7 +124,7 @@ Module.register("MMM-NOAAAlerts", {
             return;
         }
 
-        // Fade out current alert before switching
+        // Fade out all alerts and activate the current one
         alertElements.forEach((al, idx) => {
             if (idx === myID) {
                 al.classList.add("active");
@@ -137,11 +137,23 @@ Module.register("MMM-NOAAAlerts", {
             }
         });
 
-        // Delay before rotating to the next alert
-        setTimeout(() => {
-            this.rotateAlerts();
-        }, this.config.rotateInterval);
+        if (this.config.showAsMarquee) {
+            // Wait until marquee animation finishes before rotating
+            let activeAlert = alertElements[myID];
+            activeAlert.addEventListener("animationend", () => {
+                if (this.config.debug) {
+                    console.log(`MMM-NOAAAlerts: Marquee animation finished for alert ${myID}.`);
+                }
+                this.rotateAlerts();
+            }, { once: true }); // Ensure it only runs once per animation
+        } else {
+            // Delay before rotating to the next alert in non-marquee mode
+            setTimeout(() => {
+                this.rotateAlerts();
+            }, this.config.rotateInterval);
+        }
     }
+
     ,
 
     /**
